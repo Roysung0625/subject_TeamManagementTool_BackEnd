@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  employee: one
+  status: MyString
+  category: MyString
+  detail: MyText
+  due: 2025-05-22 15:08:51
+
+two:
+  employee: two
+  status: MyString
+  category: MyString
+  detail: MyText
+  due: 2025-05-22 15:08:51
