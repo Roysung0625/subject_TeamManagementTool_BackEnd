@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_22_061455) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_23_092032) do
   create_table "employee_teams", force: :cascade do |t|
     t.integer "employee_id", null: false
     t.integer "team_id", null: false
@@ -26,6 +26,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_22_061455) do
     t.string "role"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "password_digest"
   end
 
   create_table "tasks", force: :cascade do |t|

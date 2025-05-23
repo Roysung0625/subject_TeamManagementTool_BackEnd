@@ -2,9 +2,15 @@
 
 module Api
   class AuthController < ApplicationController
+    include Authenticatable
+
+    before_action :authenticate_request!, only: %i[logout]
+
     # POST /api/auth/login
     def login
-      employee = Employee.find_by(email: params[:email])
+      employee = Employee.find_by(employee_id: employee_params[:employee_id])
+      #&.(safe navigation)を使うと、employeeがnilの場合でも、NoMethod Errorの代わりにnilをreturn
+      #authenticate methodはApplication Recordから継承
       if employee&.authenticate(params[:password])
         token = JsonWebToken.encode(employee_id: employee.id)
         render json: { token: token, employee: EmployeeSerializer.new(employee) }
@@ -28,7 +34,7 @@ module Api
     private
 
     def employee_params
-      params.permit(:email, :password, :password_confirmation)
+      params.permit(:employee_id, :name, :password)
     end
   end
 end
