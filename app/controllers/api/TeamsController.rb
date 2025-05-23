@@ -5,7 +5,6 @@ module Api
   class TeamsController < ApplicationController
     include Authenticatable
     #Rails提供 CallBack DSL / updateとdestroy Action実行前にset_team methodを呼び出すように設定
-    before_action :set_team, only: %i[update destroy]
     #権限確認
     before_action :auth_admin, only: %i[create update destroy update_members]
 
@@ -23,6 +22,7 @@ module Api
 
     # PATCH  /api/teams/:id
     def update
+      @team = Team.find(params[:id])
       #update = assign_attribute + save
       if @team.update(team_params)
         render json: @team
@@ -33,6 +33,7 @@ module Api
 
     # DELETE /api/teams/:id
     def destroy
+      @team = Team.find(params[:id])
       @team.destroy
       #204 No content
       head :no_content
