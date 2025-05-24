@@ -11,7 +11,7 @@ module Api
       employee = Employee.find_by(employee_id: employee_params[:employee_id])
       #&.(safe navigation)を使うと、employeeがnilの場合でも、NoMethod Errorの代わりにnilをreturn
       #authenticate methodはApplication Recordから継承
-      if employee&.authenticate(params[:password])
+      if employee&.authenticate(employee_params[:password])
         token = JsonWebToken.encode(employee_id: employee.id)
         render json: { token: token, employee: EmployeeSerializer.new(employee) }
       else
