@@ -4,6 +4,7 @@ module Api
   class TasksController < ApplicationController
     include Authenticatable
     #権限確認
+    before_action :authenticate_request!
     before_action :auth_admin, only: %i[create update destroy]
 
     # POST   /api/tasks
