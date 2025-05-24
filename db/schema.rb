@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_05_23_092032) do
+ActiveRecord::Schema[8.0].define(version: 2025_05_24_065537) do
   create_table "employee_teams", force: :cascade do |t|
     t.integer "employee_id", null: false
     t.integer "team_id", null: false
@@ -23,7 +23,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_23_092032) do
 
   create_table "employees", force: :cascade do |t|
     t.string "name"
-    t.string "role"
+    t.string "role", default: "Employee"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "password_digest"
@@ -37,6 +37,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_05_23_092032) do
     t.datetime "due"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "title"
     t.index ["employee_id"], name: "index_tasks_on_employee_id"
   end
 

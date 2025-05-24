@@ -12,11 +12,15 @@ module Authenticatable
   #上のBlock内のcodeは、include Authenticatableする各Controller内部で実行
   def authenticate_request!
     header = request.headers['Authorization']
+    logger.debug "Authorization Header: #{header.inspect}"
     #if header exists
     token = header.split(' ').last if header
+    logger.debug "Extracted Token: #{token.inspect}"
     decoded = JsonWebToken.decode(token)
+    logger.debug "decoded: #{decoded.inspect}"
     #payloadの中のuser_idをDBの中で照会
-    @current_employee = Employee.find_by(id: decoded[:user_id]) if decoded
+    @current_employee = Employee.find_by(id: decoded[:employee_id]) if decoded
+    logger.debug "User ID from Token: #{@current_employee.inspect}"
     #DBで照会ができない場合、エラーメッセージを送信 / status 401
     render json: { error: 'Not Authorized' }, status: :unauthorized unless @current_employee
   end

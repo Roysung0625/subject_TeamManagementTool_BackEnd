@@ -8,7 +8,8 @@ module Api
 
     # POST /api/auth/login
     def login
-      employee = Employee.find_by(employee_id: employee_params[:employee_id])
+      logger.debug(employee_params[:employee_id])
+      employee = Employee.find_by(id: employee_params[:employee_id])
       #&.(safe navigation)を使うと、employeeがnilの場合でも、NoMethod Errorの代わりにnilをreturn
       #authenticate methodはApplication Recordから継承
       if employee&.authenticate(employee_params[:password])

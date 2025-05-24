@@ -10,11 +10,13 @@ module Api
 
     # POST   /api/teams
     def create
-
       team = Team.new(team_params)
+      #追加する時はidsで / こうすると team_employee table アップデート
+      team.employees << @current_employee
       if team.save
+        dto = Response::Teams::TeamSummaryDto.from_team(team)
         #HTTP status 201
-        render json: team, status: :created
+        render json: dto, status: :created
       else
         render json: { errors: team.errors.full_messages }, status: :bad_request
       end
@@ -25,7 +27,9 @@ module Api
       @team = Team.find(params[:id])
       #update = assign_attribute + save
       if @team.update(team_params)
-        render json: @team
+        dto = Response::Teams::TeamSummaryDto.from_team(@team)
+        #HTTP status 201
+        render json: dto, status: :created
       else
         render json: { errors: @team.errors.full_messages }, status: :bad_request
       end
@@ -39,9 +43,14 @@ module Api
       head :no_content
     end
 
+    # GET /api/teams/:team_id
     def index_by_team
       team = Team.find(params[:team_id])
-      render json: team.employees, status: :ok
+      employees_dtos = team.employees.map do |employee|
+        dto = Response::Teams::EmployeeSummaryDto.from_employee(employee)
+      end
+      #HTTP status 201
+      render json: employees_dtos, status: :ok
     rescue ActiveRecord::RecordNotFound
       render json: { error: "Team not found" }, status: :not_found
     end
@@ -49,9 +58,22 @@ module Api
     # PATCH  /api/teams/management/:team_id
     def update_members
       team = Team.find(params[:team_id])
-      if params[:employee_id].present?
-        team.employee_ids = team_params[:employees]
-        render json: team.employees, status: :ok
+      logger.debug "params employees = #{team_params[:employees]}"
+      if team_params[:employees].present?
+        new_members = team.employee_ids
+        team_params[:employees].each do |employee_id|
+          find_employee = Employee.find(employee_id)
+
+          unless new_members.include?(find_employee.id)
+            new_members.push(employee_id)
+            find_employee.teams << team
+          end
+        end
+        team.employee_ids = new_members
+        employees_dtos = team.employees.map do |employee|
+          dto = Response::Teams::EmployeeSummaryDto.from_employee(employee)
+        end
+        render json: employees_dtos, status: :ok
       else
         render json: { error: 'employee_ids parameterが必要です' }, status: :bad_request
       end
@@ -60,7 +82,10 @@ module Api
     # GET    /api/teams/:employee_id
     def index_by_employee
       employee = Employee.find(params[:employee_id])
-      render json: employee.teams
+      teams_dtos = employee.teams.map do |team|
+        dto = Response::Teams::TeamSummaryDto.from_team(team)
+      end
+      render json: teams_dtos
     end
 
     private
@@ -76,15 +101,15 @@ module Api
     end
 
     def team_params
-      #require: team parameter(include body)が必須 / permit: その中でname keyが必須
-      params.require(:team).permit(:name, :employees)
+      #require: teams parameter(include body)が必須 / permit: その中でname keyが必須
+      params.permit(:name, employees: [])
     end
     # path parameter
     # /api/teams/42 から 42 → params[:id]
     # query parameter
     # /api/teams?sort=asc から sort=asc → params[:sort]
     # body parameter(json)
-    # JSON または form-data で送った値 → params[:team], params[:name] など
+    # JSON または form-data で送った値 → params[:teams], params[:name] など
     # コントローラ、アクション、フォーマットなど、Railsが自動的に入れる値
 
   end

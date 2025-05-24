@@ -5,6 +5,7 @@ module Api
     include Authenticatable
     #権限確認
     before_action :authenticate_request!
+    before_action :find_task, only: %i[update destroy]
     before_action :auth_admin, only: %i[update destroy]
 
     # POST   /api/tasks
@@ -27,7 +28,7 @@ module Api
 
     # PATCH  /api/tasks/:id
     def update
-      @task = Task.find(params[:id])
+      find_task
       dto = Response::Tasks::TaskSummaryDto.from_task(@task)
       if @task.update(task_params)
         render json: dto, status: :ok
@@ -38,14 +39,14 @@ module Api
 
     # DELETE /api/tasks/:id
     def destroy
-      @task = Task.find(params[:id])
+      find_task
       @task.destroy
       head :no_content
     end
 
     # GET  /api/tasks/:id
     def show
-      @task = Task.find(params[:id])
+      find_task
       dto = Response::Tasks::TaskSummaryDto.from_task(@task)
       render json:dto, status: :ok
     end
@@ -75,7 +76,7 @@ module Api
       render json: taskDtos, status: :ok
     end
 
-    # GET    /api/tasks/:team_id?offset=x / and filter query category=&status=&employee_id=
+    # GET    /api/tasks/list:team_id?offset=x / and filter query category=&status=&employee_id=
     def index_by_team
       #inner join
       tasks = Task.joins(employee: :teams)
@@ -108,9 +109,13 @@ module Api
 
     private
 
+    def find_task
+      @task = Task.find(params[:id])
+    end
+
     #Adminは他の人のタスク関与が可能
     def auth_admin
-      if @task.employee.id != current_employee
+      if @task.employee_id != current_employee.id
         if current_employee.role != 'Admin'
           render json: { error: "AdminだけがAPIを利用できます。" }, status: :forbidden
         end
