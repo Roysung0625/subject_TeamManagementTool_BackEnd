@@ -71,3 +71,9 @@ gem 'active_model_serializers' # or fast_jsonapi
 group :development do
   gem 'dotenv-rails' # .envでSECRET_KEY管理
 end
+
+group :development, :test do
+  gem "rspec-rails", "~> 6.0"
+  gem "factory_bot_rails"
+  gem "faker"
+end
