@@ -85,11 +85,13 @@ module Api
         status: params[:status],
         employee_id: params[:employee_id]
       }
+      Rails.logger.debug("Filter #{filters}")
       # サービス層からチームごとのFilteringされたPagingタスクを取得
       tasks = TaskService.get_team_paginated_tasks(params[:team_id], filters, params[:offset])
       task_dtos = tasks.map do |task_model|
         Response::Tasks::TaskSummaryDto.from_task(task_model)
       end
+      Rails.logger.debug("Filtered Task #{task_dtos}")
 
       render json: task_dtos, status: :ok
     end

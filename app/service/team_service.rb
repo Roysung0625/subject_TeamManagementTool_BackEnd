@@ -51,33 +51,36 @@ class TeamService
     team.destroy! # 例外を発生させる可能性もあるが、通常はhead :no_contentで処理される
   end
 
-  # Teamメンバー更新処理（追加のみ）
+  # Teamメンバー更新処理（完全置換）
   # @param team [Team] メンバーを更新する対象のTeamObject
-  # @param employee_ids_to_add [Array<Integer>] Teamに追加する従業員IDのArray
+  # @param employee_ids [Array<Integer>] Teamに設定する従業員IDのArray
   # @param current_employee [Employee] 現在認証されている従業員Object
   # @return [ActiveRecord::Collection<Employee>] 更新後のTeamメンバーのCollection
   # @raise [ForbiddenError] 管理者以外のユーザーがこのAPIを利用しようとした場合
   # @raise [ArgumentError] employee_ids Parameterが提供されない場合
   # @raise [ActiveRecord::RecordNotFound] 指定されたemployee_idが見つからない場合
-  def self.update_team_members(team, employee_ids_to_add, current_employee)
+  def self.update_team_members(team, employee_ids, current_employee)
     # 管理者権限のCheck
     raise ForbiddenError, "管理者のみがこのAPIを利用できます。" unless current_employee.role == 'Admin'
-    raise ArgumentError, 'employee_ids parameterが必要です' if employee_ids_to_add.blank?
+    raise ArgumentError, 'employee_ids parameterが必要です' if employee_ids.nil?
 
-    existing_employee_ids = team.employee_ids
-
-    employee_ids_to_add.each do |employee_id|
-      # すでにメンバーである場合はSkip
-      # next == continue
-      next if existing_employee_ids.include?(employee_id.to_i)
-
-      # 従業員を見つける。見つからない場合は ActiveRecord::RecordNotFound が発生し、Controllerで処理される
-      employee = Employee.find(employee_id)
-      # Teamに従業員を追加（join tableにRecordが追加される）
-      team.employees << employee
+    # 空の配列の場合は全メンバーを削除
+    if employee_ids.empty?
+      team.employees.clear
+      return team.employees
     end
 
-    team.employees # 更新後の従業員Collectionを返す
+    # 指定された従業員IDが全て存在するかチェック
+    employees = Employee.where(id: employee_ids)
+    if employees.count != employee_ids.length
+      found_ids = employees.pluck(:id)
+      missing_ids = employee_ids - found_ids
+      raise ActiveRecord::RecordNotFound, "Employee with id #{missing_ids.join(', ')} not found"
+    end
+
+    # 既存のメンバーを全て削除し、新しいメンバーを設定
+    team.employees = employees
+    team.employees
   end
 
   # 特定のTeamの全従業員を取得

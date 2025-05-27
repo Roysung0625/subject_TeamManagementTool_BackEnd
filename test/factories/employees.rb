@@ -2,8 +2,8 @@
 FactoryBot.define do
   factory :employee do
     sequence(:name) { |n| "Employee #{n}" }
-    password { "password123" }
-    password_confirmation { password } # password 속성의 값을 그대로 사용
+    password { "password" }
+    password_confirmation { "password" }
     role { "Employee" }
 
     trait :admin do

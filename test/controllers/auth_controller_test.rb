@@ -5,7 +5,7 @@ require "test_helper" # Railsのテストヘルパーを読み込みます
 class Api::AuthControllerTest < ActionDispatch::IntegrationTest
   # 各テスト実行前に共通のセットアップを行います
   setup do
-    @employee_password = 'password123' # テスト用の社員パスワード
+    @employee_password = 'password' # テスト用の社員パスワード
     # FactoryBotを使用してテスト用の社員データを作成します
     @employee = create(:employee, password: @employee_password)
   end
@@ -33,7 +33,7 @@ class Api::AuthControllerTest < ActionDispatch::IntegrationTest
 
     # Employeeレコードが1件増えることを確認します
     assert_difference('Employee.count', 1) do
-      post api_auth_register_url, params: valid_attributes # 登録APIエンドポイントへPOSTリクエスト
+      post "/api/auth/register", params: valid_attributes # 登録APIエンドポイントへPOSTリクエスト
     end
 
     assert_response :created # HTTPステータスコード201 (Created) であることを確認
@@ -47,7 +47,7 @@ class Api::AuthControllerTest < ActionDispatch::IntegrationTest
     # Employeeレコード数に変化がないことを確認します
     assert_no_difference('Employee.count') do
       # Acceptヘッダーを指定して、サーバーにJSON形式のレスポンスを期待することを伝えます
-      post api_auth_register_url, params: invalid_attributes, headers: { 'Accept' => 'application/json'}
+      post "/api/auth/register", params: invalid_attributes, headers: { 'Accept' => 'application/json'}
     end
 
     assert_response :internal_server_error # または :bad_request
@@ -56,7 +56,7 @@ class Api::AuthControllerTest < ActionDispatch::IntegrationTest
   # --- POST /api/auth/login (ログイン) のテスト ---
   test "POST /api/auth/login: 有効な認証情報でトークンと社員詳細が返されること" do
     login_credentials = { employee_id: @employee.id, password: @employee_password }
-    post api_auth_login_url, params: login_credentials # ログインAPIエンドポイントへPOSTリクエスト
+    post "/api/auth/login", params: login_credentials # ログインAPIエンドポイントへPOSTリクエスト
 
     assert_response :ok # HTTPステータスコード200 (OK) であることを確認
     assert_not_nil json_response['token'] # レスポンスにトークンが含まれていること
@@ -66,7 +66,7 @@ class Api::AuthControllerTest < ActionDispatch::IntegrationTest
 
   test "POST /api/auth/login: 無効なパスワードで認証エラーが返されること" do
     invalid_credentials = { employee_id: @employee.id, password: "wrong_password" } # 間違ったパスワード
-    post api_auth_login_url, params: invalid_credentials
+    post "/api/auth/login", params: invalid_credentials
 
     assert_response :unauthorized # HTTPステータスコード401 (Unauthorized) であることを確認
     assert_equal "Invalid credentials", json_response['error'] # エラーメッセージが正しいこと
@@ -74,7 +74,7 @@ class Api::AuthControllerTest < ActionDispatch::IntegrationTest
 
   test "POST /api/auth/login: 存在しない社員IDで認証エラーが返されること" do
     non_existent_credentials = { employee_id: "non_existent_id", password: "password" } # 存在しない社員ID
-    post api_auth_login_url, params: non_existent_credentials
+    post "/api/auth/login", params: non_existent_credentials
 
     assert_response :unauthorized # HTTPステータスコード401 (Unauthorized) であることを確認
     assert_equal "Invalid credentials", json_response['error'] # エラーメッセージが正しいこと
@@ -83,12 +83,12 @@ class Api::AuthControllerTest < ActionDispatch::IntegrationTest
   # --- POST /api/auth/logout (ログアウト) のテスト ---
   test "POST /api/auth/logout: 認証済みの場合コンテンツなし(204)が返されること" do
     # 認証ヘッダーを付与してログアウトAPIエンドポイントへPOSTリクエスト
-    post api_auth_logout_url, headers: authenticated_header(@employee)
+    post "/api/auth/logout", headers: authenticated_header(@employee)
     assert_response :no_content # HTTPステータスコード204 (No Content) であることを確認
   end
 
   test "POST /api/auth/logout: 未認証の場合認証エラーが返されること" do
-    post api_auth_logout_url # 認証トークンなしでリクエスト
+    post "/api/auth/logout" # 認証トークンなしでリクエスト
     assert_response :unauthorized # HTTPステータスコード401 (Unauthorized) であることを確認
     assert_equal 'Not Authorized', json_response['error'] # エラーメッセージが正しいこと
   end

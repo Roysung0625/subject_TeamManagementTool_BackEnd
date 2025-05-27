@@ -17,7 +17,7 @@ class TaskService
     if params[:employee_id].to_i != current_employee.id
       # 現在の従業員が管理者roleでない場合、ForbiddenErrorを発生させる
       unless current_employee.role == 'Admin'
-        raise ForbiddenError, "管理者のみが他の従業員のTaskを作成できます。"
+        raise ForbiddenError, "Adminだけ他の人のタスク生成可能"
       end
     end
     # Task.create! は validation error が発生した場合、ActiveRecord::RecordInvalid 例外を発生させる
@@ -34,7 +34,7 @@ class TaskService
   def self.update_task(task, params, current_employee)
     # Taskの所有者でない、かつ管理者roleでもない場合、ForbiddenErrorを発生させる
     unless task.employee_id == current_employee.id || current_employee.role == 'Admin'
-      raise ForbiddenError, "このTaskを更新する権限がありません。"
+      raise ForbiddenError, "AdminだけがAPIを利用できます。"
     end
     # task.update! はバリデーションエラーが発生した場合、ActiveRecord::RecordInvalid 例外を発生させる
     task.update!(params)
@@ -48,7 +48,7 @@ class TaskService
   def self.delete_task(task, current_employee)
     # Taskの所有者でない、かつ管理者roleでもない場合、ForbiddenErrorを発生させる
     unless task.employee_id == current_employee.id || current_employee.role == 'Admin'
-      raise ForbiddenError, "このTaskを削除する権限がありません。"
+      raise ForbiddenError, "AdminだけがAPIを利用できます。"
     end
     task.destroy! # 例外を発生させる可能性もあるが、通常はhead :no_contentで処理される
   end

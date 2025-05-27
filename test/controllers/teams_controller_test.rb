@@ -72,13 +72,13 @@ class Api::TeamsControllerTest < ActionDispatch::IntegrationTest
 
   # --- チーム作成 (POST /api/teams) のテスト ---
   test "POST /api/teams: 管理者認証が必要であること" do
-    assert_requires_admin_authentication(:post, api_teams_url, { name: "Test Team Auth" })
+    assert_requires_admin_authentication(:post, "/api/teams", { name: "Test Team Auth" })
   end
 
   test "POST /api/teams: 管理者が有効なパラメータでチームを作成できること" do
     valid_team_params = { name: "New Awesome Team" }
     assert_difference 'Team.count', 1 do
-      post api_teams_url, params: valid_team_params.to_json, headers: authenticated_header(@admin_user)
+      post "/api/teams", params: valid_team_params.to_json, headers: authenticated_header(@admin_user)
     end
     assert_response :created
   end
@@ -86,62 +86,62 @@ class Api::TeamsControllerTest < ActionDispatch::IntegrationTest
   test "POST /api/teams: 管理者が無効なパラメータでチーム作成に失敗すること" do
     invalid_team_params = { name: "" }
     assert_no_difference 'Team.count' do
-      post api_teams_url, params: invalid_team_params.to_json, headers: authenticated_header(@admin_user)
+      post "/api/teams", params: invalid_team_params.to_json, headers: authenticated_header(@admin_user)
     end
-    assert_response :bad_request # 또는 :unprocessable_entity
+    assert_response :unprocessable_entity
   end
 
   # --- チーム更新 (PATCH /api/teams/:id) のテスト ---
   test "PATCH /api/teams/:id: 管理者認証が必要であること" do
-    assert_requires_admin_authentication(:patch, api_team_url(@existing_team), { name: "Test Update Auth" })
+    assert_requires_admin_authentication(:patch, "/api/teams/#{@existing_team.id}", { name: "Test Update Auth" })
   end
 
   test "PATCH /api/teams/:id: 管理者がチームを更新できること" do
     update_params = { name: "Updated Team Name" }
-    patch api_team_url(@existing_team), params: update_params.to_json, headers: authenticated_header(@admin_user)
-    assert_response :created
+    patch "/api/teams/#{@existing_team.id}", params: update_params.to_json, headers: authenticated_header(@admin_user)
+    assert_response :ok
   end
 
   test "PATCH /api/teams/:id: 管理者が存在しないチームの更新を試みた場合not_foundが返ること" do
-    patch api_team_url("non_existent_id"), params: { name: "test" }.to_json, headers: authenticated_header(@admin_user)
+    patch "/api/teams/non_existent_id", params: { name: "test" }.to_json, headers: authenticated_header(@admin_user)
     assert_response :not_found
   end
 
   test "PATCH /api/teams/:id: 管理者が無効なパラメータでチーム更新に失敗すること" do
-    patch api_team_url(@existing_team), params: { name: "" }.to_json, headers: authenticated_header(@admin_user)
-    assert_response :bad_request
+    patch "/api/teams/#{@existing_team.id}", params: { name: "" }.to_json, headers: authenticated_header(@admin_user)
+    assert_response :unprocessable_entity
   end
 
   # --- チーム削除 (DELETE /api/teams/:id) のテスト ---
   test "DELETE /api/teams/:id: 管理者認証が必要であること" do
-    assert_requires_admin_authentication(:delete, api_team_url(@team_to_delete))
+    assert_requires_admin_authentication(:delete, "/api/teams/#{@team_to_delete.id}")
   end
 
   test "DELETE /api/teams/:id: 管理者がチームを削除できること" do
     assert_difference 'Team.count', -1 do
-      delete api_team_url(@team_to_delete), headers: authenticated_header(@admin_user)
+      delete "/api/teams/#{@team_to_delete.id}", headers: authenticated_header(@admin_user)
     end
     assert_response :no_content
   end
 
   test "DELETE /api/teams/:id: 管理者が存在しないチームの削除を試みた場合not_foundが返ること" do
-    delete api_team_url("non_existent_id"), headers: authenticated_header(@admin_user)
+    delete "/api/teams/non_existent_id", headers: authenticated_header(@admin_user)
     assert_response :not_found
   end
 
   # --- チーム別社員一覧取得 (GET /api/teams/team/:team_id) のテスト ---
   test "GET /api/teams/team/:team_id: 認証が必要であること" do
-    get team_api_teams_url(team_id: @team_for_employees_list.id)
+    get "/api/teams/team/#{@team_for_employees_list.id}"
     assert_response :unauthorized
   end
 
   test "GET /api/teams/team/:team_id: 認証済みの場合チームの社員一覧が返されること" do
-    get team_api_teams_url(team_id: @team_for_employees_list.id), headers: authenticated_header(@regular_user)
+    get "/api/teams/team/#{@team_for_employees_list.id}", headers: authenticated_header(@regular_user)
     assert_response :ok
   end
 
   test "GET /api/teams/team/:team_id: チームが存在しない場合not_foundが返ること" do
-    get team_api_teams_url(team_id: "non_existent_id"), headers: authenticated_header(@regular_user)
+    get "/api/teams/team/non_existent_id", headers: authenticated_header(@regular_user)
     assert_response :not_found
   end
 
@@ -149,14 +149,14 @@ class Api::TeamsControllerTest < ActionDispatch::IntegrationTest
   test "PATCH /api/teams/management/:team_id: 管理者認証が必要であること" do
     assert_requires_admin_authentication(
       :patch,
-      management_api_teams_url(team_id: @team_for_member_update.id),
+      "/api/teams/management/#{@team_for_member_update.id}",
       { employees: [@another_employee1.id] }
     )
   end
 
   test "PATCH /api/teams/management/:team_id: 管理者が新しいメンバーを追加できること" do
     member_update_params = { employees: [@another_employee1.id, @another_employee2.id] }
-    patch management_api_teams_url(team_id: @team_for_member_update.id),
+    patch "/api/teams/management/#{@team_for_member_update.id}",
           params: member_update_params.to_json,
           headers: authenticated_header(@admin_user)
     assert_response :ok
@@ -164,35 +164,35 @@ class Api::TeamsControllerTest < ActionDispatch::IntegrationTest
 
   test "PATCH /api/teams/management/:team_id: 管理者がメンバーを更新できること" do
     member_update_params = { employees: [@another_employee1.id] }
-    patch management_api_teams_url(team_id: @team_for_member_update.id),
+    patch "/api/teams/management/#{@team_for_member_update.id}",
           params: member_update_params.to_json,
           headers: authenticated_header(@admin_user)
     assert_response :ok
   end
 
   test "PATCH /api/teams/management/:team_id: 管理者がemployees配列空で全メンバー削除できること" do
-    patch management_api_teams_url(team_id: @team_for_member_update.id),
+    patch "/api/teams/management/#{@team_for_member_update.id}",
           params: { employees: [] }.to_json,
           headers: authenticated_header(@admin_user)
     assert_response :ok
   end
 
   test "PATCH /api/teams/management/:team_id: 管理者がemployeesパラメータ無しでリクエストした場合bad_requestが返ること" do
-    patch management_api_teams_url(team_id: @team_for_member_update.id),
-          params: {}.to_json, # employeesキー自体がない (JSON으로 보낼 때는 빈 객체)
+    patch "/api/teams/management/#{@team_for_member_update.id}",
+          params: {}.to_json, # employeesキー自体がない
           headers: authenticated_header(@admin_user)
     assert_response :bad_request
   end
 
   test "PATCH /api/teams/management/:team_id: 管理者が存在しないチームのメンバー更新を試みた場合not_foundが返ること" do
-    patch management_api_teams_url(team_id: "non_existent_id"),
+    patch "/api/teams/management/non_existent_id",
           params: { employees: [@another_employee1.id] }.to_json,
           headers: authenticated_header(@admin_user)
     assert_response :not_found
   end
 
   test "PATCH /api/teams/management/:team_id: 管理者が無効な社員IDリストでリクエストした場合not_foundが返ること" do
-    patch management_api_teams_url(team_id: @team_for_member_update.id),
+    patch "/api/teams/management/#{@team_for_member_update.id}",
           params: { employees: [@another_employee1.id, "invalid_id"] }.to_json,
           headers: authenticated_header(@admin_user)
     assert_response :not_found
@@ -200,17 +200,17 @@ class Api::TeamsControllerTest < ActionDispatch::IntegrationTest
 
   # --- 社員別所属チーム一覧取得 (GET /api/teams/employee/:employee_id) のテスト ---
   test "GET /api/teams/employee/:employee_id: 認証が必要であること" do
-    get employee_api_teams_url(employee_id: @employee_for_teams_list.id)
+    get "/api/teams/employee/#{@employee_for_teams_list.id}"
     assert_response :unauthorized
   end
 
   test "GET /api/teams/employee/:employee_id: 認証済みの場合指定社員所属チーム一覧が返ること" do
-    get employee_api_teams_url(employee_id: @employee_for_teams_list.id), headers: authenticated_header(@admin_user)
+    get "/api/teams/employee/#{@employee_for_teams_list.id}", headers: authenticated_header(@admin_user)
     assert_response :ok
   end
 
   test "GET /api/teams/employee/:employee_id: 社員が存在しない場合not_foundが返ること" do
-    get employee_api_teams_url(employee_id: "non_existent_id"), headers: authenticated_header(@regular_user)
+    get "/api/teams/employee/non_existent_id", headers: authenticated_header(@regular_user)
     assert_response :not_found
   end
 end

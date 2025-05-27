@@ -4,6 +4,7 @@ class Task < ApplicationRecord
 
   enum :status,  { pending: "pending", in_progress: "in_progress", done: "done" }
 
-  # 필수 값 검증 예시
-  # validates :status, :category, :detail, :due, presence: true
+  # 필수 값 검증
+  validates :title, presence: true
+  validates :status, :category, :detail, :due, presence: true
 end
